@@ -54,6 +54,7 @@ StableID.identify(id: <new_user_identifier>)
 To receive updates when a user ID changes (for example from detecting a change from another iCloud device), configure a delegate:
 
 ```swift
+// call after configuring StableID
 StableID.set(delegate: MyClass())
 
 class MyClass: StableIDDelegate {
@@ -65,6 +66,27 @@ class MyClass: StableIDDelegate {
         // called once the ID changes
     }
 }
+```
+
+### Custom ID Generators
+
+By default, StableID uses a standard `IDGenerator` that generates simple UUIDs.
+
+If you want any generated identifiers to follow a certain pattern, you can implement a custom ID generator by conforming to `IDGenerator` and implementing `generateID()`:
+
+```swift
+struct MyCustomIDGenerator: IDGenerator {
+    func generateID() -> String {
+        // do something custom
+        return myGeneratedID
+    }
+}
+```
+
+Then pass the generator as part of the `configure` method:
+
+```swift
+StableID.configure(idGenerator: MyCustomIDGenerator())
 ```
 
 ## License
