@@ -8,7 +8,7 @@ It's useful for services like [RevenueCat](https://github.com/RevenueCat/purchas
 
 StableID persists across all devices of a user's iCloud account.
 
-## Installation
+## 📦 Installation
 
 Add this repository as a Swift package.
 
@@ -16,13 +16,13 @@ Add this repository as a Swift package.
 https://github.com/codykerns/StableID
 ```
 
-## Before using StableID
+## ℹ️ Before using StableID
 
 In order to use StableID, you'll need to add the iCloud capability to your target and enable `Key-value storage`:
 
 <img width="692" alt="Screenshot 2024-02-17 at 1 12 04 AM" src="https://github.com/codykerns/StableID/assets/44073103/84adbea2-b27a-492d-b752-2b9f1b9d064d">
 
-## Configuration
+## 🛠️ Configuration
 
 Initialize StableID:
 
@@ -88,6 +88,10 @@ Then pass the generator as part of the `configure` method:
 StableID.configure(idGenerator: MyCustomIDGenerator())
 ```
 
-## License
+## 📚 Examples
+
+_Coming soon_
+
+## 📙 License
 
 MIT
