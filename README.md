@@ -10,7 +10,9 @@ StableID persists across all devices of a user's iCloud account.
 
 Add this repository as a Swift package.
 
-`https://github.com/codykerns/StableID`
+```plaintext
+https://github.com/codykerns/StableID
+```
 
 # Before using StableID
 
