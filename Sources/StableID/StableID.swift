@@ -17,14 +17,15 @@ public class StableID {
         return _stableID
     }
 
-    private init(_id: String) {
+    private init(_id: String, _idGenerator: IDGenerator) {
         self._id = _id
+        self._idGenerator = _idGenerator
     }
 
     private static var _remoteStore = NSUbiquitousKeyValueStore.default
     private static var _localStore = UserDefaults(suiteName: Constants.StableID_Key_DefaultsSuiteName)
 
-    public static func configure(id: String? = nil) {
+    public static func configure(id: String? = nil, idGenerator: IDGenerator = StandardGenerator()) {
         guard isConfigured == false else {
             self.logger.log(type: .error, message: "StableID has already been configured! Call `identify` to change the identifier.")
             return
@@ -33,7 +34,7 @@ public class StableID {
         self.logger.log(type: .info, message: "Configuring StableID...")
 
         // By default, generate a new anonymous identifier
-        var identifier = UUID().uuidString
+        var identifier = idGenerator.generateID()
 
         if let id {
             // if an identifier is provided in the configure method, identify with it
@@ -59,7 +60,7 @@ public class StableID {
             }
         }
 
-        _stableID = StableID(_id: identifier)
+        _stableID = StableID(_id: identifier, _idGenerator: idGenerator)
 
         self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
 
@@ -70,6 +71,8 @@ public class StableID {
     }
 
     private static let logger = StableIDLogger()
+
+    private var _idGenerator: any IDGenerator
 
     private var _id: String
 
@@ -116,7 +119,7 @@ public class StableID {
         } else {
             Self.logger.log(type: .warning, message: "StableID removed from iCloud. Reverting to local value: \(_id)")
 
-            // The store was updated, but the id is empty. Reset to a new UUID
+            // The store was updated, but the id is empty. Reset back to configured identifier
             self.setIdentity(value: _id)
         }
 
