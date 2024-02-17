@@ -22,16 +22,18 @@ final class StableIDTests: XCTestCase {
         clearDefaults()
 
         StableID.configure()
+        XCTAssert(StableID.isConfigured == true)
     }
 
-    func testDelegate() {
+    func testIdentifying() {
         clearDefaults()
         
         StableID.configure()
 
         let uuid = UUID().uuidString
-
         StableID.identify(id: uuid)
+
+        XCTAssert(StableID.id == uuid)
     }
 
 }

@@ -15,9 +15,3 @@ public protocol StableIDDelegate {
     /// Called after StableID changes the identified user ID.
     func didChangeID(newID: String)
 }
-
-extension StableIDPlugin {
-    public static func simple(didChangeID: ((String) -> Void)) -> BasicPlugin {
-        return StableID.SimplePlugin(didChangeID: didChangeID)
-    }
-}
