@@ -1,4 +1,4 @@
-# A simple, stable user identifier across devices
+### A simple, stable user identifier across devices
 
 StableID is a simple package that helps you keep a stable user identifier across devices by leveraging [iCloud Key Value Store](https://developer.apple.com/documentation/foundation/nsubiquitouskeyvaluestore)).
 
@@ -6,7 +6,7 @@ It's useful for services like [RevenueCat](https://github.com/RevenueCat/purchas
 
 StableID persists across all devices of a user's iCloud account.
 
-# Installation
+## Installation
 
 Add this repository as a Swift package.
 
@@ -14,13 +14,13 @@ Add this repository as a Swift package.
 https://github.com/codykerns/StableID
 ```
 
-# Before using StableID
+## Before using StableID
 
 In order to use StableID, you'll need to add the iCloud capability to your target and enable `Key-value storage`:
 
 <img width="692" alt="Screenshot 2024-02-17 at 1 12 04 AM" src="https://github.com/codykerns/StableID/assets/44073103/84adbea2-b27a-492d-b752-2b9f1b9d064d">
 
-# Configuration
+## Configuration
 
 Initialize StableID:
 
@@ -34,7 +34,7 @@ If you want to provide a custom identifier:
 StableID.configure(id: <optional_user_id>)
 ```
 
-## Receiving updates
+### Receiving updates
 
 To receive updates when a user ID changes (for example from detecting a change from another iCloud device), configure a delegate:
 
@@ -51,3 +51,7 @@ class MyClass: StableIDDelegate {
     }
 }
 ```
+
+## License
+
+MIT
