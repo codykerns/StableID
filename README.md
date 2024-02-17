@@ -28,7 +28,9 @@ Initialize StableID:
 StableID.configure()
 ```
 
-If you want to provide a custom identifier:
+By default, StableID will look for any other StableID identifier in iCloud or local user defaults - otherwise, it will generate a new identifier.
+
+If you want to provide a custom identifier to force the client to be set to a specific identifier and update iCloud:
 
 ```swift
 StableID.configure(id: <optional_user_id>)
