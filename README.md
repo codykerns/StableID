@@ -51,7 +51,7 @@ StableID.identify(id: <new_user_identifier>)
 
 ### Receiving updates
 
-To receive updates when a user ID changes (for example from detecting a change from another iCloud device), configure a delegate:
+To receive updates when a user identifier changes (for example from detecting a change from another iCloud device), configure a delegate:
 
 ```swift
 // call after configuring StableID
