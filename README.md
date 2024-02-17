@@ -39,6 +39,16 @@ If you want to provide a custom identifier to force the client to be set to a sp
 StableID.configure(id: <optional_user_id>)
 ```
 
+Call `StableID.isConfigured` to see if StableID has already been configured.
+
+### Changing identifiers
+
+To change identifiers, call:
+
+```swift
+StableID.identify(id: <new_user_identifier>)
+```
+
 ### Receiving updates
 
 To receive updates when a user ID changes (for example from detecting a change from another iCloud device), configure a delegate:
