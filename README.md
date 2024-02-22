@@ -2,14 +2,13 @@
 
 [![SwiftPM compatible](https://img.shields.io/badge/SwiftPM-compatible-orange.svg)](#Installation)
 
-
 StableID is a simple package that helps you keep a stable user identifier across devices by leveraging [iCloud Key Value Store](https://developer.apple.com/documentation/foundation/nsubiquitouskeyvaluestore)).
 
 It's useful for services like [RevenueCat](https://github.com/RevenueCat/purchases-ios), where you may want to maintain a consistent user identifier to allow users to access their purchases across their devices, but you _don't_ want to have a complete account system or use anonymous identifiers.
 
 StableID persists across all devices of a user's iCloud account.
 
-## Installation
+## 📦 Installation
 
 Add this repository as a Swift package.
 
@@ -17,13 +16,13 @@ Add this repository as a Swift package.
 https://github.com/codykerns/StableID
 ```
 
-## Before using StableID
+## ℹ️ Before using StableID
 
 In order to use StableID, you'll need to add the iCloud capability to your target and enable `Key-value storage`:
 
 <img width="692" alt="Screenshot 2024-02-17 at 1 12 04 AM" src="https://github.com/codykerns/StableID/assets/44073103/84adbea2-b27a-492d-b752-2b9f1b9d064d">
 
-## Configuration
+## 🛠️ Configuration
 
 Initialize StableID:
 
@@ -51,9 +50,10 @@ StableID.identify(id: <new_user_identifier>)
 
 ### Receiving updates
 
-To receive updates when a user ID changes (for example from detecting a change from another iCloud device), configure a delegate:
+To receive updates when a user identifier changes (for example from detecting a change from another iCloud device), configure a delegate:
 
 ```swift
+// call after configuring StableID
 StableID.set(delegate: MyClass())
 
 class MyClass: StableIDDelegate {
@@ -67,6 +67,31 @@ class MyClass: StableIDDelegate {
 }
 ```
 
-## License
+### Custom ID Generators
+
+By default, StableID uses a standard `IDGenerator` that generates simple UUIDs.
+
+If you want any generated identifiers to follow a certain pattern, you can implement a custom ID generator by conforming to `IDGenerator` and implementing `generateID()`:
+
+```swift
+struct MyCustomIDGenerator: IDGenerator {
+    func generateID() -> String {
+        // do something custom
+        return myGeneratedID
+    }
+}
+```
+
+Then pass the generator as part of the `configure` method:
+
+```swift
+StableID.configure(idGenerator: MyCustomIDGenerator())
+```
+
+## 📚 Examples
+
+_Coming soon_
+
+## 📙 License
 
 MIT
