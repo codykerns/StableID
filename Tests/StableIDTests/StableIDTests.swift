@@ -12,7 +12,7 @@ final class StableIDTests: XCTestCase {
 
     func clearDefaults() {
         guard let defaults = UserDefaults(suiteName: Constants.StableID_Key_DefaultsSuiteName) else { return }
-        
+
         let dictionary = defaults.dictionaryRepresentation()
         dictionary.keys.forEach { key in
             print(key)
@@ -20,16 +20,24 @@ final class StableIDTests: XCTestCase {
         }
     }
 
-    func testConfiguring() {
-        clearDefaults()
+    override func setUp() {
+        super.setUp()
 
+        clearDefaults()
+    }
+
+    override func tearDown() {
+        super.tearDown()
+
+        StableID._stableID = nil
+    }
+
+    func testConfiguring() {
         StableID.configure()
         XCTAssert(StableID.isConfigured == true)
     }
 
     func testIdentifying() {
-        clearDefaults()
-        
         StableID.configure()
 
         let uuid = UUID().uuidString
@@ -39,8 +47,6 @@ final class StableIDTests: XCTestCase {
     }
 
     func testGenerateNewID() {
-        clearDefaults()
-        
         StableID.configure()
         let originalID = StableID.id
 
@@ -51,8 +57,6 @@ final class StableIDTests: XCTestCase {
     }
 
     func testShortIDLength() {
-        clearDefaults()
-
         StableID.configure(idGenerator: StableID.ShortIDGenerator())
 
         XCTAssert(StableID.id.count == 8)
