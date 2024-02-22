@@ -8,7 +8,7 @@
 import Foundation
 
 public class StableID {
-    private static var _stableID: StableID? = nil
+    internal static var _stableID: StableID? = nil
 
     private static var shared: StableID {
         guard let _stableID else {
