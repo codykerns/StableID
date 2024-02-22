@@ -19,4 +19,16 @@ extension StableID {
             return UUID().uuidString
         }
     }
+
+    public class ShortIDGenerator: IDGenerator {
+        public init() { }
+
+        public func generateID() -> String {
+            let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+            return String((0..<8).compactMap { _ in
+                letters.randomElement()
+            })
+        }
+    }
 }
