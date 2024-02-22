@@ -21,3 +21,8 @@ jobs:
     
     - name: Show eligible build destinations for StableID
       run: xcodebuild -showdestinations -scheme StableID
+
+    - name: Build and test ( macOS 13)
+      run: xcodebuild test -scheme StableID -destination 'platform=macOS,arch=x86_64,id=4203018E-580F-C1B5-9525-B745CECA79EB'
+    - name: Build and test ( iOS 17)
+      run: xcodebuild test -scheme StableID -destination 'platform=iOS Simulator,id=713EEE58-0B4F-4A0C-8FC9-4A1E611BEDBD,OS=17.2,name=iPhone 15 Pro'
