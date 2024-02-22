@@ -88,6 +88,10 @@ Then pass the generator as part of the `configure` method:
 StableID.configure(idGenerator: MyCustomIDGenerator())
 ```
 
+**Built-in generators**
+- `StableID.StandardGenerator`: Standard UUIDs
+- `StableID.ShortIDGenerator`: 8-character alphanumeric IDs
+
 ## 📚 Examples
 
 _Coming soon_

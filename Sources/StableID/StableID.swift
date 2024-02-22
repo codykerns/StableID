@@ -87,12 +87,21 @@ public class StableID {
                 adjustedId = delegateId
             }
 
+            Self.logger.log(type: .info, message: "Setting StableID to \(adjustedId)")
+
             Self.shared._id = adjustedId
             self.setLocal(key: Constants.StableID_Key_Identifier, value: adjustedId)
             self.setRemote(key: Constants.StableID_Key_Identifier, value: adjustedId)
 
             self.delegate?.didChangeID(newID: adjustedId)
         }
+    }
+
+    private func generateID() {
+        Self.logger.log(type: .info, message: "Generating new StableID.")
+
+        let newID = self._idGenerator.generateID()
+        self.setIdentity(value: newID)
     }
 
     private func setLocal(key: String, value: String) {
@@ -134,8 +143,11 @@ extension StableID {
     public static var id: String { return Self.shared._id }
 
     public static func identify(id: String) {
-        logger.log(type: .info, message: "Setting StableID to \(id)")
         Self.shared.setIdentity(value: id)
+    }
+
+    public static func generateNewID() {
+        Self.shared.generateID()
     }
 
     public static func set(delegate: any StableIDDelegate) {
