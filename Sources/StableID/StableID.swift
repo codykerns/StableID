@@ -61,6 +61,11 @@ public class StableID {
         }
 
         _stableID = StableID(_id: identifier, _idGenerator: idGenerator)
+        
+        // Save to both local and remote storage
+        Self._localStore?.set(identifier, forKey: Constants.StableID_Key_Identifier)
+        Self._remoteStore.set(identifier, forKey: Constants.StableID_Key_Identifier)
+        Self._remoteStore.synchronize()
 
         self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
 
