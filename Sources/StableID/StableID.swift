@@ -24,6 +24,8 @@ public class StableID {
 
     private static var _remoteStore = NSUbiquitousKeyValueStore.default
     private static var _localStore = UserDefaults(suiteName: Constants.StableID_Key_DefaultsSuiteName)
+    
+    private static var isGeneratingFirstID: Bool = false
 
     public static func configure(id: String? = nil, idGenerator: IDGenerator = StandardGenerator()) {
         guard isConfigured == false else {
@@ -56,11 +58,17 @@ public class StableID {
                     self.logger.log(type: .info, message: "Configuring with local ID: \(localID)")
                 } else {
                     self.logger.log(type: .info, message: "No available identifier. Generating new unique user identifier...")
+                    
+                    isGeneratingFirstID = true
                 }
             }
         }
 
         _stableID = StableID(_id: identifier, _idGenerator: idGenerator)
+        
+        if (isGeneratingFirstID) {
+            self.shared.generateID()
+        }
 
         self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
 
