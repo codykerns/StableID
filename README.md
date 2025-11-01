@@ -45,12 +45,20 @@ if StableID.hasStoredID {
 } else {
     Task {
         let id = try await StableID.fetchAppTransactionID()
-        StableID.configure(id: id, policy: .preferStored)
+        StableID.configure(id: id)
     }
 }
 ```
 
-The `.preferStored` policy ensures that if an ID is already stored (from another device via iCloud), it will be used instead of the fetched AppTransactionID. This keeps your ID consistent across all devices.
+Or, use a policy:
+```swift
+Task {
+    let id = try await StableID.fetchAppTransactionID()
+    StableID.configure(id: id, policy: .preferStored)
+}
+```
+
+The `.preferStored` policy ensures that if an ID is already stored (from another device via iCloud), it will be used instead of the provided ID during the configure call. This keeps your ID consistent across all devices.
 
 **Benefits:**
 - Globally unique per Apple Account
@@ -82,7 +90,7 @@ Call `StableID.isConfigured` to see if StableID has already been configured.
 
 When providing an ID to `configure()`, you can specify a policy to control how that ID is used:
 
-**`.preferStored`** (Recommended for AppTransactionID)
+**`.preferStored`**
 - Checks iCloud and local storage first
 - Only uses the provided ID if no stored ID exists
 - Ensures consistency across app launches
