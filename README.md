@@ -22,9 +22,55 @@ In order to use StableID, you'll need to add the iCloud capability to your targe
 
 <img width="692" alt="Screenshot 2024-02-17 at 1 12 04 AM" src="https://github.com/codykerns/StableID/assets/44073103/84adbea2-b27a-492d-b752-2b9f1b9d064d">
 
+## 🤩 The pitch: a single point to get a consistent ID
+
+Getting the current stable identifier is simple:
+
+```swift
+let currentID = StableID.id
+```
+
+That's it. One line to get a user identifier that persists across devices and app reinstalls.
+
 ## 🛠️ Configuration
 
-Initialize StableID:
+### Recommended: Use App Store Transaction ID (iOS 16.0+)
+
+For App Store apps, the best way to configure StableID is using the App Store's AppTransactionID. This provides a globally unique, stable identifier tied to each user's Apple Account:
+
+```swift
+// Only fetch if not already configured
+if StableID.hasStoredID {
+    StableID.configure()
+} else {
+    Task {
+        let id = try await StableID.fetchAppTransactionID()
+        StableID.configure(id: id)
+    }
+}
+```
+
+Or, use a policy:
+```swift
+Task {
+    let id = try await StableID.fetchAppTransactionID()
+    StableID.configure(id: id, policy: .preferStored)
+}
+```
+
+The `.preferStored` policy ensures that if an ID is already stored (from another device via iCloud), it will be used instead of the provided ID during the configure call. This keeps your ID consistent across all devices.
+
+**Benefits:**
+- Globally unique per Apple Account
+- Persists across redownloads, refunds, and repurchases
+- Works even without in-app purchases
+- Unique per family member for Family Sharing apps
+- Most reliable identifier for App Store distributed apps
+- Only fetches from App Store once, then uses stored value
+
+### Basic Configuration
+
+Alternatively, you can initialize StableID with auto-generated identifiers:
 
 ```swift
 StableID.configure()
@@ -37,8 +83,31 @@ If you want to provide a custom identifier to force the client to be set to a sp
 ```swift
 StableID.configure(id: <optional_user_id>)
 ```
-
+    
 Call `StableID.isConfigured` to see if StableID has already been configured.
+
+### ID Policies
+
+When providing an ID to `configure()`, you can specify a policy to control how that ID is used:
+
+**`.preferStored`**
+- Checks iCloud and local storage first
+- Only uses the provided ID if no stored ID exists
+- Ensures consistency across app launches
+
+```swift
+let id = try await StableID.fetchAppTransactionID()
+StableID.configure(id: id, policy: .preferStored)
+```
+
+**`.forceUpdate`** (Default)
+- Always uses the provided ID
+- Updates storage with the new ID
+- Use when you want to override any existing stored ID
+
+```swift
+StableID.configure(id: "user-123", policy: .forceUpdate)
+```
 
 ### Changing identifiers
 

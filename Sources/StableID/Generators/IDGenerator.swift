@@ -14,7 +14,7 @@ public protocol IDGenerator {
 extension StableID {
     public class StandardGenerator: IDGenerator {
         public init() { }
-        
+
         public func generateID() -> String {
             return UUID().uuidString
         }
