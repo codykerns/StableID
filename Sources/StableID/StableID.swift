@@ -6,6 +6,15 @@
 //
 
 import Foundation
+import StoreKit
+
+/// Policy for handling provided IDs during configuration
+public enum IDPolicy {
+    /// Use stored ID if available (iCloud or local), otherwise use the provided/generated ID
+    case preferStored
+    /// Always use the provided ID and update storage
+    case forceUpdate
+}
 
 public class StableID {
     internal static var _stableID: StableID? = nil
@@ -25,7 +34,7 @@ public class StableID {
     private static var _remoteStore = NSUbiquitousKeyValueStore.default
     private static var _localStore = UserDefaults(suiteName: Constants.StableID_Key_DefaultsSuiteName)
 
-    public static func configure(id: String? = nil, idGenerator: IDGenerator = StandardGenerator()) {
+    public static func configure(id: String? = nil, idGenerator: IDGenerator = StandardGenerator(), policy: IDPolicy = .forceUpdate) {
         guard isConfigured == false else {
             self.logger.log(type: .error, message: "StableID has already been configured! Call `identify` to change the identifier.")
             return
@@ -33,38 +42,29 @@ public class StableID {
 
         self.logger.log(type: .info, message: "Configuring StableID...")
 
-        // By default, generate a new anonymous identifier
+        // By default, generate a new anonymous identifier that we'll use if there isn't an ID present
         var identifier = idGenerator.generateID()
 
         if let id {
-            // if an identifier is provided in the configure method, identify with it
-            identifier = id
-            self.logger.log(type: .info, message: "Identifying with configured ID: \(id)")
-        } else {
-            self.logger.log(type: .info, message: "No ID passed to `configure`. Checking iCloud store...")
-
-            if let remoteID = Self._remoteStore.string(forKey: Constants.StableID_Key_Identifier) {
-                // if an identifier exists in iCloud, use that
-                identifier = remoteID
-                self.logger.log(type: .info, message: "Configuring with iCloud ID: \(remoteID)")
+            // If policy is preferStored, check for stored IDs first
+            if policy == .preferStored {
+                self.logger.log(type: .info, message: "ID provided with preferStored policy.")
+                identifier = Self.fetchStoredID() ?? id
             } else {
-                self.logger.log(type: .info, message: "No ID available in iCloud. Checking local defaults...")
-
-                if let localID = Self._localStore?.string(forKey: Constants.StableID_Key_Identifier) {
-                    // if an identifier only exists locally, use that
-                    identifier = localID
-                    self.logger.log(type: .info, message: "Configuring with local ID: \(localID)")
-                } else {
-                    self.logger.log(type: .info, message: "No available identifier. Generating new unique user identifier...")
-                }
+                // forceUpdate policy: always use the provided ID
+                identifier = id
+                self.logger.log(type: .info, message: "Identifying with configured ID: \(id)")
             }
+        } else {
+            self.logger.log(type: .info, message: "No ID passed to `configure`.")
+            identifier = Self.fetchStoredID()  ?? identifier
         }
 
         let stableID = StableID(_id: identifier, _idGenerator: idGenerator)
         stableID.persist(identifier: identifier)
 
         self._stableID = stableID
-        
+
         self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
 
         NotificationCenter.default.addObserver(Self.shared,
@@ -106,6 +106,33 @@ public class StableID {
         self.setIdentity(value: newID)
     }
 
+    private static func fetchRemoteID() -> String? {
+        return _remoteStore.string(forKey: Constants.StableID_Key_Identifier)
+    }
+
+    private static func fetchLocalID() -> String? {
+        return _localStore?.string(forKey: Constants.StableID_Key_Identifier)
+    }
+
+    private static func fetchStoredID() -> String? {
+        logger.log(type: .info, message: "Checking iCloud store...")
+
+        if let remoteID = fetchRemoteID() {
+            logger.log(type: .info, message: "Found iCloud ID: \(remoteID)")
+            return remoteID
+        }
+
+        logger.log(type: .info, message: "No ID available in iCloud. Checking local defaults...")
+
+        if let localID = fetchLocalID() {
+            logger.log(type: .info, message: "Found local ID: \(localID)")
+            return localID
+        }
+
+        logger.log(type: .info, message: "No stored ID found.")
+        return nil
+    }
+
     private func persist(identifier: String) {
         Self._localStore?.set(identifier, forKey: Constants.StableID_Key_Identifier)
         Self._remoteStore.set(identifier, forKey: Constants.StableID_Key_Identifier)
@@ -114,7 +141,7 @@ public class StableID {
 
     @objc
     private func didChangeExternally(_ notification: Notification) {
-        if let newId = Self._remoteStore.string(forKey: Constants.StableID_Key_Identifier) {
+        if let newId = Self.fetchRemoteID() {
             if newId != _id {
                 Self.logger.log(type: .info, message: "Detected new StableID: \(newId)")
 
@@ -151,5 +178,33 @@ extension StableID {
 
     public static func set(delegate: any StableIDDelegate) {
         Self.shared.delegate = delegate
+    }
+    
+    public static var hasStoredID: Bool { fetchStoredID() != nil }
+
+    /// Fetches the AppTransactionID from the App Store.
+    /// The AppTransactionID is a globally unique identifier for each Apple Account that downloads your app.
+    /// It remains stable across redownloads, refunds, repurchases, and storefront changes.
+    ///
+    /// Example usage:
+    /// ```swift
+    /// let id = try await StableID.fetchAppTransactionID()
+    /// StableID.configure(id: id, policy: .preferStored)
+    /// ```
+    ///
+    /// - Returns: The appTransactionID if the transaction is verified
+    /// - Throws: An error if the app transaction verification fails
+    @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, visionOS 1.0, *)
+    public static func fetchAppTransactionID() async throws -> String {
+        let verificationResult = try await AppTransaction.shared
+
+        switch verificationResult {
+        case .verified(let appTransaction):
+            // StoreKit verified the app transaction
+            return appTransaction.appTransactionID
+        case .unverified(_, let verificationError):
+            // The app transaction didn't pass StoreKit's verification
+            throw verificationError
+        }
     }
 }
