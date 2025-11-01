@@ -43,8 +43,10 @@ For App Store apps, the best way to configure StableID is using the App Store's 
 if StableID.hasStoredID {
     StableID.configure()
 } else {
-    let id = try await StableID.fetchAppTransactionID()
-    StableID.configure(id: id, policy: .preferStored)
+    Task {
+        let id = try await StableID.fetchAppTransactionID()
+        StableID.configure(id: id, policy: .preferStored)
+    }
 }
 ```
 
