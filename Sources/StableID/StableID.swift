@@ -60,8 +60,11 @@ public class StableID {
             }
         }
 
-        _stableID = StableID(_id: identifier, _idGenerator: idGenerator)
+        let stableID = StableID(_id: identifier, _idGenerator: idGenerator)
+        stableID.persist(identifier: identifier)
 
+        self._stableID = stableID
+        
         self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
 
         NotificationCenter.default.addObserver(Self.shared,
@@ -90,8 +93,7 @@ public class StableID {
             Self.logger.log(type: .info, message: "Setting StableID to \(adjustedId)")
 
             Self.shared._id = adjustedId
-            self.setLocal(key: Constants.StableID_Key_Identifier, value: adjustedId)
-            self.setRemote(key: Constants.StableID_Key_Identifier, value: adjustedId)
+            self.persist(identifier: adjustedId)
 
             self.delegate?.didChangeID(newID: adjustedId)
         }
@@ -104,12 +106,9 @@ public class StableID {
         self.setIdentity(value: newID)
     }
 
-    private func setLocal(key: String, value: String) {
-        Self._localStore?.set(value, forKey: key)
-    }
-
-    private func setRemote(key: String, value: String) {
-        Self._remoteStore.set(value, forKey: key)
+    private func persist(identifier: String) {
+        Self._localStore?.set(identifier, forKey: Constants.StableID_Key_Identifier)
+        Self._remoteStore.set(identifier, forKey: Constants.StableID_Key_Identifier)
         Self._remoteStore.synchronize()
     }
 
