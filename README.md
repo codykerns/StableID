@@ -264,14 +264,12 @@ func userDidLogout() {
     // Generate a new anonymous ID
     StableID.generateNewID()
 
-    // Log out of RevenueCat and configure with new anonymous ID
-    Purchases.shared.logOut { error in
+    // Switch RevenueCat to the new anonymous ID
+    Purchases.shared.logIn(StableID.id) { customerInfo, created, error in
         if let error = error {
-            print("Error logging out of RevenueCat: \(error)")
+            print("Error switching to anonymous ID: \(error)")
         } else {
-            Purchases.shared.logIn(StableID.id) { _, _, _ in
-                print("Logged in to RevenueCat with new anonymous ID")
-            }
+            print("Switched to anonymous ID: \(StableID.id)")
         }
     }
 }
@@ -291,8 +289,6 @@ import RevenueCat
 
 @main
 struct MyApp: App {
-    @StateObject private var appCoordinator = AppCoordinator()
-
     init() {
         // Configure StableID with .preferStored policy
         Task {
@@ -314,7 +310,6 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(appCoordinator)
         }
     }
 }
