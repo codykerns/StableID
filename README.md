@@ -163,7 +163,182 @@ StableID.configure(idGenerator: MyCustomIDGenerator())
 
 ## 📚 Examples
 
-_Coming soon_
+<details>
+<summary><b>Example 1: Basic Setup with RevenueCat</b></summary>
+
+Configure StableID and use it to configure RevenueCat with a consistent user identifier:
+
+```swift
+import StableID
+import RevenueCat
+
+class AppDelegate: UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+
+        // Configure StableID first
+        if StableID.hasStoredID {
+            StableID.configure()
+
+            // Configure RevenueCat with StableID
+            Purchases.configure(withAPIKey: "your_api_key", appUserID: StableID.id)
+        } else {
+            Task {
+                // Try to fetch AppTransactionID, fallback to generated ID if it fails
+                if let id = try? await StableID.fetchAppTransactionID() {
+                    StableID.configure(id: id)
+                } else {
+                    StableID.configure()
+                }
+
+                // Configure RevenueCat after StableID is ready
+                Purchases.configure(withAPIKey: "your_api_key", appUserID: StableID.id)
+            }
+        }
+
+        return true
+    }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Example 2: Handling ID Changes with RevenueCat</b></summary>
+
+Use the delegate pattern to update RevenueCat when the StableID changes (e.g., from another device via iCloud):
+
+```swift
+import StableID
+import RevenueCat
+
+class AppCoordinator: StableIDDelegate {
+    init() {
+        // Set up StableID delegate
+        StableID.set(delegate: self)
+    }
+
+    func willChangeID(currentID: String, candidateID: String) -> String? {
+        // Optional: validate or modify the candidate ID
+        return nil
+    }
+
+    func didChangeID(newID: String) {
+        // Update RevenueCat with the new ID
+        Purchases.shared.logIn(newID) { customerInfo, created, error in
+            if let error = error {
+                print("Error updating RevenueCat user: \(error)")
+            } else {
+                print("Successfully updated RevenueCat user to: \(newID)")
+            }
+        }
+    }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Example 3: User Login Flow</b></summary>
+
+Handle the case where a user logs into your app with their own account:
+
+```swift
+import StableID
+import RevenueCat
+
+func userDidLogin(userID: String) {
+    // Update StableID to use the user's account ID
+    StableID.identify(id: userID)
+
+    // Update RevenueCat to match
+    Purchases.shared.logIn(userID) { customerInfo, created, error in
+        if let error = error {
+            print("Error logging in to RevenueCat: \(error)")
+        } else {
+            print("Successfully logged in to RevenueCat")
+        }
+    }
+}
+
+func userDidLogout() {
+    // Generate a new anonymous ID
+    StableID.generateNewID()
+
+    // Switch RevenueCat to the new anonymous ID
+    Purchases.shared.logIn(StableID.id) { customerInfo, created, error in
+        if let error = error {
+            print("Error switching to anonymous ID: \(error)")
+        } else {
+            print("Switched to anonymous ID: \(StableID.id)")
+        }
+    }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Example 4: SwiftUI App with Async Configuration</b></summary>
+
+For SwiftUI apps, configure StableID and RevenueCat in your App struct:
+
+```swift
+import SwiftUI
+import StableID
+import RevenueCat
+
+@main
+struct MyApp: App {
+    init() {
+        // Configure StableID with .preferStored policy
+        Task {
+            do {
+                let id = try await StableID.fetchAppTransactionID()
+                StableID.configure(id: id, policy: .preferStored)
+
+                // Configure RevenueCat after StableID is ready
+                Purchases.configure(withAPIKey: "your_api_key", appUserID: StableID.id)
+            } catch {
+                print("Error configuring StableID: \(error)")
+                // Fallback to generated ID
+                StableID.configure()
+                Purchases.configure(withAPIKey: "your_api_key", appUserID: StableID.id)
+            }
+        }
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Example 5: Custom ID Generator for Testing</b></summary>
+
+Use a custom ID generator for testing or specific formatting requirements:
+
+```swift
+import StableID
+
+struct TestIDGenerator: IDGenerator {
+    func generateID() -> String {
+        return "test-user-\(UUID().uuidString.prefix(8))"
+    }
+}
+
+#if DEBUG
+StableID.configure(idGenerator: TestIDGenerator())
+#else
+StableID.configure()
+#endif
+```
+
+</details>
 
 ## 📙 License
 
