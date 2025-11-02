@@ -17,30 +17,30 @@ public enum IDPolicy {
 }
 
 public class StableID {
-    internal static var _stableID: StableID? = nil
+    internal static var instance: StableID? = nil
 
     private static var shared: StableID {
-        guard let _stableID else {
+        guard let instance else {
              fatalError("StableID not configured.")
         }
-        return _stableID
+        return instance
     }
 
-    private init(_id: String, _idGenerator: IDGenerator) {
-        self._id = _id
-        self._idGenerator = _idGenerator
+    private init(id: String, idGenerator: IDGenerator) {
+        self.id = id
+        self.idGenerator = idGenerator
     }
 
-    private static var _remoteStore = NSUbiquitousKeyValueStore.default
-    private static var _localStore = UserDefaults(suiteName: Constants.StableID_Key_DefaultsSuiteName)
+    private static var remoteStore = NSUbiquitousKeyValueStore.default
+    private static var localStore = UserDefaults(suiteName: Constants.StableID_Key_DefaultsSuiteName)
 
     public static func configure(id: String? = nil, idGenerator: IDGenerator = StandardGenerator(), policy: IDPolicy = .forceUpdate) {
         guard isConfigured == false else {
-            self.logger.log(type: .error, message: "StableID has already been configured! Call `identify` to change the identifier.")
+            Self.logger.log(type: .error, message: "StableID has already been configured! Call `identify` to change the identifier.")
             return
         }
 
-        self.logger.log(type: .info, message: "Configuring StableID...")
+        Self.logger.log(type: .info, message: "Configuring StableID...")
 
         // By default, generate a new anonymous identifier that we'll use if there isn't an ID present
         var identifier = idGenerator.generateID()
@@ -48,24 +48,24 @@ public class StableID {
         if let id {
             // If policy is preferStored, check for stored IDs first
             if policy == .preferStored {
-                self.logger.log(type: .info, message: "ID provided with preferStored policy.")
+                Self.logger.log(type: .info, message: "ID provided with preferStored policy.")
                 identifier = Self.fetchStoredID() ?? id
             } else {
                 // forceUpdate policy: always use the provided ID
                 identifier = id
-                self.logger.log(type: .info, message: "Identifying with configured ID: \(id)")
+                Self.logger.log(type: .info, message: "Identifying with configured ID: \(id)")
             }
         } else {
-            self.logger.log(type: .info, message: "No ID passed to `configure`.")
+            Self.logger.log(type: .info, message: "No ID passed to `configure`.")
             identifier = Self.fetchStoredID()  ?? identifier
         }
 
-        let stableID = StableID(_id: identifier, _idGenerator: idGenerator)
+        let stableID = StableID(id: identifier, idGenerator: idGenerator)
         stableID.persist(identifier: identifier)
 
-        self._stableID = stableID
+        Self.instance = stableID
 
-        self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
+        Self.logger.log(type: .info, message: "Configured StableID. Current user ID: \(identifier)")
 
         NotificationCenter.default.addObserver(Self.shared,
                                                selector: #selector(didChangeExternally),
@@ -75,24 +75,24 @@ public class StableID {
 
     private static let logger = StableIDLogger()
 
-    private var _idGenerator: any IDGenerator
+    private var idGenerator: any IDGenerator
 
-    private var _id: String
+    private var id: String
 
     private var delegate: (any StableIDDelegate)?
 
     private func setIdentity(value: String) {
-        if value != _id {
+        if value != id {
 
             var adjustedId = value
 
-            if let delegateId = self.delegate?.willChangeID(currentID: self._id, candidateID: value) {
+            if let delegateId = self.delegate?.willChangeID(currentID: self.id, candidateID: value) {
                 adjustedId = delegateId
             }
 
             Self.logger.log(type: .info, message: "Setting StableID to \(adjustedId)")
 
-            Self.shared._id = adjustedId
+            Self.shared.id = adjustedId
             self.persist(identifier: adjustedId)
 
             self.delegate?.didChangeID(newID: adjustedId)
@@ -102,47 +102,39 @@ public class StableID {
     private func generateID() {
         Self.logger.log(type: .info, message: "Generating new StableID.")
 
-        let newID = self._idGenerator.generateID()
+        let newID = self.idGenerator.generateID()
         self.setIdentity(value: newID)
     }
 
-    private static func fetchRemoteID() -> String? {
-        return _remoteStore.string(forKey: Constants.StableID_Key_Identifier)
-    }
-
-    private static func fetchLocalID() -> String? {
-        return _localStore?.string(forKey: Constants.StableID_Key_Identifier)
-    }
-
     private static func fetchStoredID() -> String? {
-        logger.log(type: .info, message: "Checking iCloud store...")
+        Self.logger.log(type: .info, message: "Checking iCloud store...")
 
-        if let remoteID = fetchRemoteID() {
-            logger.log(type: .info, message: "Found iCloud ID: \(remoteID)")
+        if let remoteID = remoteStore.string(forKey: Constants.StableID_Key_Identifier) {
+            Self.logger.log(type: .info, message: "Found iCloud ID: \(remoteID)")
             return remoteID
         }
 
-        logger.log(type: .info, message: "No ID available in iCloud. Checking local defaults...")
+        Self.logger.log(type: .info, message: "No ID available in iCloud. Checking local defaults...")
 
-        if let localID = fetchLocalID() {
-            logger.log(type: .info, message: "Found local ID: \(localID)")
+        if let localID = localStore?.string(forKey: Constants.StableID_Key_Identifier) {
+            Self.logger.log(type: .info, message: "Found local ID: \(localID)")
             return localID
         }
 
-        logger.log(type: .info, message: "No stored ID found.")
+        Self.logger.log(type: .info, message: "No stored ID found.")
         return nil
     }
 
     private func persist(identifier: String) {
-        Self._localStore?.set(identifier, forKey: Constants.StableID_Key_Identifier)
-        Self._remoteStore.set(identifier, forKey: Constants.StableID_Key_Identifier)
-        Self._remoteStore.synchronize()
+        Self.localStore?.set(identifier, forKey: Constants.StableID_Key_Identifier)
+        Self.remoteStore.set(identifier, forKey: Constants.StableID_Key_Identifier)
+        Self.remoteStore.synchronize()
     }
 
     @objc
     private func didChangeExternally(_ notification: Notification) {
-        if let newId = Self.fetchRemoteID() {
-            if newId != _id {
+        if let newId = Self.remoteStore.string(forKey: Constants.StableID_Key_Identifier) {
+            if newId != id {
                 Self.logger.log(type: .info, message: "Detected new StableID: \(newId)")
 
                 self.setIdentity(value: newId)
@@ -152,10 +144,10 @@ public class StableID {
             }
 
         } else {
-            Self.logger.log(type: .warning, message: "StableID removed from iCloud. Reverting to local value: \(_id)")
+            Self.logger.log(type: .warning, message: "StableID removed from iCloud. Reverting to local value: \(id)")
 
             // The store was updated, but the id is empty. Reset back to configured identifier
-            self.setIdentity(value: _id)
+            self.setIdentity(value: id)
         }
 
     }
@@ -164,9 +156,9 @@ public class StableID {
 
 /// Public methods
 extension StableID {
-    public static var isConfigured: Bool { _stableID != nil }
+    public static var isConfigured: Bool { instance != nil }
 
-    public static var id: String { return Self.shared._id }
+    public static var id: String { return Self.shared.id }
 
     public static func identify(id: String) {
         Self.shared.setIdentity(value: id)
@@ -181,6 +173,12 @@ extension StableID {
     }
     
     public static var hasStoredID: Bool { fetchStoredID() != nil }
+
+    /// Resets the StableID instance. For testing purposes only.
+    /// - Warning: This will clear the current StableID instance and require reconfiguration.
+    internal static func reset() {
+        instance = nil
+    }
 
     /// Fetches the AppTransactionID from the App Store.
     /// The AppTransactionID is a globally unique identifier for each Apple Account that downloads your app.
